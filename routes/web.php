@@ -21,6 +21,20 @@ Route::resources([
         'posts' => \App\Http\Controllers\PostController::class
 ]);
 
+Route::get('/enter/{age}/{name}',function($age,$name){
+    $client = Elasticsearch\ClientBuilder::create()->build();	//connect with the client
+    $params = array();
+    $params['body']  = array(	
+      'name' => $name, 											//preparing structred data
+      'age' => $age
+      
+    );
+    $params['index'] = 'BeyBlade';
+    $params['type']  = 'BeyBlade_Owner';
+    $result = $client->index($params);							//using Index() function to inject the data
+    var_dump($result);
+});
+
 
 
 

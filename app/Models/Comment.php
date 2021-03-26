@@ -13,6 +13,16 @@ class Comment extends Model
 
     protected $fillable = ['post_id', 'name','email','body'];
 
+    public function toSearchableArray()
+    {
+        $array = $this->toArray();
+
+        // Customize the data array...
+
+        return $array;
+    }
+
+
     public function post()
     {
         return $this->belongsTo(\App\Models\Post::class);

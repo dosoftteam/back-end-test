@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;  
-use \App\Models\Comment;
+use Illuminate\Http\Request;   
+
+use \App\Models\Comment; 
 use Exception;
+use Response;
 
 class CommentController extends Controller
-{
+{ 
     /**
      * Display a listing of the resource.
      *
@@ -15,15 +17,46 @@ class CommentController extends Controller
      */
     public function index()
     {
+        $search = strip_tags( request()->get('search') );
+         
         try {
-            $comments = Comment::selectRaw("post_id as postId, id,name,email,body")->get()->toArray();
+            $arr_comments = array();
+
+            $comments = Comment::selectRaw("post_id as postId, id,name,email,body");
+
+            //scalable use laravel scout driver at model, run elasticsearch:9200, 
+            if( trim( strlen( $search ) ) > 0 )
+            {
+                $comments = Comment::search($search)->get();
+                if( count($comments ) > 0 ) {
+                    $arr_comment_filter = array();
+                    foreach ( $comments  as $comment)
+                    {
+                        $arr_comment_filter[]=[
+                                                'postId'=> $comment->post_id ,  
+                                                'id'    => $comment->id,
+                                                'name'  => $comment->name,
+                                                'body'  => $comment->body
+                                            ];
+                    }
+                    $arr_comments = $arr_comment_filter;
+                     
+                } else {
+                    $arr_comments = [];
+                }
+            } else {
+                $comments = Comment::selectRaw("post_id as postId, id,name,email,body");
+                $arr_comments = $comments->get()->toArray();
+            } 
+
             $status = 200;
         } catch ( Exception $error )
         {
-            $comments = array();
+            $arr_comments = array($error->getMessage());
             $status = 500;
         } 
-        return response($comments,$status, ['Content-Type'=>'application/json']);
+ 
+        return response($arr_comments,$status, ['Content-Type'=>'application/json']);
     }
 
     /**
